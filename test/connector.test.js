@@ -179,7 +179,7 @@ describe('Connector', function() {
             users[0].email.should.equal(EMAIL);
             users[0].emailVerified.should.be.true;
             users[0].favoriteColor.should.equal('orange');
-            _.any(users, { favoriteColor: 'orange' }).should.be.true;
+            _.all(users, { favoriteColor: 'orange' }).should.be.true;
             next();
         });
     });
@@ -314,6 +314,68 @@ describe('Connector', function() {
             where: { email: 'fred@flintstone.com' }
         }, function(err, count) {
             count.should.equal(0);
+            next();
+        });
+    });
+    
+    it('should update a user: save', function(next) {
+        Customer.findById(ids.user, { omit: 'app_metadata' }, function(err, user) {
+            user.favoriteColor = 'blue';
+            user.testing = false; // omitted
+            user.save(function(err, user) {
+                user.favoriteColor.should.equal('blue');
+                user.testing.should.be.true;
+                setTimeout(next, 1000);
+            });
+        });
+    });
+    
+    it('should have updated user', function(next) {
+        Customer.findById(ids.user, function(err, user) {
+            user.id.should.equal(ids.user);
+            user.favoriteColor.should.equal('blue');
+            user.testing.should.be.true;
+            next();
+        });
+    });
+    
+    it('should update a user: updateAttributes', function(next) {
+        Customer.findById(ids.user, function(err, user) {
+            user.updateAttributes({ email: 'test@fabien.be', country: 'BE' }, function(err, user) {
+                user.favoriteColor.should.equal('blue');
+                user.country.should.equal('BE');
+                user.testing.should.be.false;
+                setTimeout(next, 1000);
+            });
+        });
+    });
+    
+    it('should have updated user', function(next) {
+        Customer.findById(ids.user, function(err, user) {
+            user.id.should.equal(ids.user);
+            user.email.should.equal('test@fabien.be');
+            user.favoriteColor.should.equal('blue');
+            user.country.should.equal('BE');
+            user.testing.should.be.true;
+            next();
+        });
+    });
+    
+    it('should update multipe users', function(next) {
+        Customer.update({ email: 'test@fabien.be' }, { country: 'NL' }, function(err, result) {
+            if (err) return next(err);
+            result.should.eql({ count: 1 });
+            setTimeout(next, 1000);
+        });
+    });
+    
+    it('should have updated multipe users', function(next) {
+        Customer.find({ country: 'NL' }, function(err, users) {
+            users.should.be.an.array;
+            users.should.not.be.empty;
+            _.all(users, { country: 'NL' }).should.be.true;
+            _.pluck(users, 'id').should.containEql(ids.user);
+            _.pluck(users, 'email').should.containEql('test@fabien.be');
             next();
         });
     });

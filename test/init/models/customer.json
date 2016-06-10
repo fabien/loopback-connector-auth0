@@ -3,7 +3,8 @@
   "properties": {},
   "auth0": {
     "mapping": {
-      "testing": "app_metadata.testing"
+      "testing": "app_metadata.testing",
+      "country": "user_metadata.country"
     },
     "attributes": {
       "testing": true
