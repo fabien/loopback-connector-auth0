@@ -4,7 +4,7 @@ Loopback connector for Auth0 User Management.
 
 Connector config example:
 
-``` json
+``` js
 {
     "domain": "DOMAIN_NAME.auth0.com",
     "clientId": "CLIENT_ID",
