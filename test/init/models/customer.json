@@ -1,0 +1,12 @@
+{
+  "name": "Customer",
+  "properties": {},
+  "auth0": {
+    "mapping": {
+      "testing": "app_metadata.testing"
+    },
+    "attributes": {
+      "testing": true
+    }
+  }
+}
