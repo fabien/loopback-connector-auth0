@@ -344,7 +344,7 @@ describe('Connector', function() {
             user.updateAttributes({ email: 'test@fabien.be', country: 'BE' }, function(err, user) {
                 user.favoriteColor.should.equal('blue');
                 user.country.should.equal('BE');
-                user.testing.should.be.false;
+                user.testing.should.be.true;
                 setTimeout(next, 1000);
             });
         });
