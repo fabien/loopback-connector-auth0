@@ -56,10 +56,10 @@ describe('Connector', function() {
         }).should.eql('email:"info@fabien.be" AND user_metadata.favoriteColor:"purple" AND ' + baseQuery);
         connector.buildWhere('Customer', {
             email: { inq: ['info@fabien.be', 'info@foo.bar'] }
-        }).should.eql('(email:"info@fabien.be" OR email:"info@foo.bar") AND ' + baseQuery);
+        }).should.eql('email:("info@fabien.be" OR "info@foo.bar") AND ' + baseQuery);
         connector.buildWhere('Customer', {
             email: { nin: ['info@fabien.be', 'info@foo.bar'] }
-        }).should.eql('-(email:"info@fabien.be" OR email:"info@foo.bar") AND ' + baseQuery);
+        }).should.eql('-email:("info@fabien.be" OR "info@foo.bar") AND ' + baseQuery);
         connector.buildWhere('Customer', {
             email: { like: ['info@*'] }
         }).should.eql('email:"info@*" AND ' + baseQuery);
@@ -72,6 +72,15 @@ describe('Connector', function() {
                 { favoriteColor: 'red', testing: false }
             ]
         }).should.eql('(email:"info@fabien.be" OR (user_metadata.favoriteColor:"red" AND app_metadata.testing:false)) AND ' + baseQuery);
+        connector.buildWhere('Customer', {
+            $search: 'orange'
+        }).should.eql('orange AND ' + baseQuery);
+        connector.buildWhere('Customer', {
+            $exists: 'favoriteColor'
+        }).should.eql('_exists_:user_metadata.favoriteColor AND ' + baseQuery);
+        connector.buildWhere('Customer', {
+            $missing: 'favoriteColor'
+        }).should.eql('_missing_:user_metadata.favoriteColor AND ' + baseQuery);
     });
     
     it('should serialize user data using mapping, defaults and attributes', function() {
@@ -275,6 +284,64 @@ describe('Connector', function() {
             users.should.have.length(1);
             users[0].id.should.equal(ids.user);
             users[0].email.should.equal(EMAIL);
+            next();
+        });
+    });
+    
+    it('should find users - filtered (11)', function(next) {
+        Customer.find({
+            where: { $search: 'orange' }
+        }, function(err, users) {
+            if (err) return next(err);
+            users.should.be.an.array;
+            users.should.have.length(1);
+            users[0].id.should.equal(ids.user);
+            users[0].email.should.equal(EMAIL);
+            next();
+        });
+    });
+    
+    it('should find users - filtered (12)', function(next) {
+        Customer.find({
+            where: { _exists_: 'favoriteColor' }
+        }, function(err, users) {
+            if (err) return next(err);
+            users.should.be.an.array;
+            users.should.have.length(1);
+            users[0].id.should.equal(ids.user);
+            users[0].email.should.equal(EMAIL);
+            next();
+        });
+    });
+    
+    it('should find users - filtered (13)', function(next) {
+        Customer.find({
+            where: { 
+                favoriteColor: {
+                    inq: ['red', 'orange', 'yellow']
+                }
+            }
+        }, function(err, users) {
+            if (err) return next(err);
+            users.should.be.an.array;
+            users.should.have.length(1);
+            users[0].id.should.equal(ids.user);
+            users[0].email.should.equal(EMAIL);
+            next();
+        });
+    });
+    
+    it('should find users - filtered (14)', function(next) {
+        Customer.find({
+            where: { 
+                favoriteColor: {
+                    nin: ['red', 'orange', 'yellow']
+                }
+            }
+        }, function(err, users) {
+            if (err) return next(err);
+            users.should.be.an.array;
+            _.pluck(users, 'id').should.not.containEql(ids.user);
             next();
         });
     });
