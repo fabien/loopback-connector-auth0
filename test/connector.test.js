@@ -61,7 +61,7 @@ describe('Connector', function() {
             email: { nin: ['info@fabien.be', 'info@foo.bar'] }
         }).should.eql('-email:("info@fabien.be" OR "info@foo.bar") AND ' + baseQuery);
         connector.buildWhere('Customer', {
-            email: { like: ['info@*'] }
+            email: { like: 'info@*' }
         }).should.eql('email:"info@*" AND ' + baseQuery);
         connector.buildWhere('Customer', {
             id: 'info@fabien.be' // aliased id when it contains @ - as email
@@ -81,6 +81,9 @@ describe('Connector', function() {
         connector.buildWhere('Customer', {
             $missing: 'favoriteColor'
         }).should.eql('_missing_:user_metadata.favoriteColor AND ' + baseQuery);
+        connector.buildWhere('Customer', {
+            favoriteColor: null
+        }).should.eql('(user_metadata.favoriteColor:"" OR user_metadata.favoriteColor:0 OR _missing_:user_metadata.favoriteColor) AND ' + baseQuery);
     });
     
     it('should serialize user data using mapping, defaults and attributes', function() {
@@ -338,6 +341,17 @@ describe('Connector', function() {
                     nin: ['red', 'orange', 'yellow']
                 }
             }
+        }, function(err, users) {
+            if (err) return next(err);
+            users.should.be.an.array;
+            _.pluck(users, 'id').should.not.containEql(ids.user);
+            next();
+        });
+    });
+    
+    it('should find users - filtered (15)', function(next) {
+        Customer.find({
+            where: { favoriteColor: null }
         }, function(err, users) {
             if (err) return next(err);
             users.should.be.an.array;
