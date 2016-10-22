@@ -319,7 +319,7 @@ describe('Connector', function() {
     
     it('should find users - filtered (13)', function(next) {
         Customer.find({
-            where: { 
+            where: {
                 favoriteColor: {
                     inq: ['red', 'orange', 'yellow']
                 }
@@ -336,7 +336,7 @@ describe('Connector', function() {
     
     it('should find users - filtered (14)', function(next) {
         Customer.find({
-            where: { 
+            where: {
                 favoriteColor: {
                     nin: ['red', 'orange', 'yellow']
                 }

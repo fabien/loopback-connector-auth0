@@ -19,15 +19,15 @@
   "license": "ISC",
   "dependencies": {
     "async": "^1.5.2",
-    "auth0": "^2.1.0",
-    "auth0-api-tokens": "^1.1.0",
+    "auth0": "^2.4.0",
+    "auth0-api-tokens": "git+ssh://git@github.com/fabien/auth0-api-tokens",
     "lodash": "^3.10.1",
     "loopback-connector": "^2.3.0",
     "traverse": "^0.6.6"
   },
   "devDependencies": {
-    "independent-juggler": "*",
-    "loopback-datasource-juggler": "^2.44.0",
+    "independent-juggler": "git+ssh://git@github.com/fabien/independent-juggler",
+    "loopback-datasource-juggler": "^2.53.0",
     "mocha": "^2.3.4",
     "should": "^8.1.1"
   }
