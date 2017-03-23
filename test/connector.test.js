@@ -43,47 +43,51 @@ describe('Connector', function() {
             fields: 'user_id,user_metadata.favoriteColor,app_metadata.demoUser'
         });
         connector.buildQuery('Customer', { where: { email: EMAIL } }).should.eql({
-            q: 'email:"info@fabien.be" AND (app_metadata.demoUser:true AND identities.connection:"Username-Password-Authentication")',
+            q: '((email:"info@fabien.be" AND app_metadata.demoUser:true) AND identities.connection:"Username-Password-Authentication")',
             search_engine: 'v2'
         });
     });
     
     it('should create a lucene query', function() {
-        var baseQuery = '(app_metadata.demoUser:true AND identities.connection:"Username-Password-Authentication")';
-        connector.buildWhere('Customer').should.eql(baseQuery);
-        connector.buildWhere('Customer', {
+        function buildWhere(where) {
+            return connector.buildQuery('Customer', { where: where }).q;
+        };
+        
+        var baseQuery = 'identities.connection:"Username-Password-Authentication"';
+        buildWhere().should.eql('(app_metadata.demoUser:true AND ' + baseQuery + ')');
+        buildWhere({
             email: 'info@fabien.be', favoriteColor: 'purple'
-        }).should.eql('email:"info@fabien.be" AND user_metadata.favoriteColor:"purple" AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('((email:"info@fabien.be" AND user_metadata.favoriteColor:"purple" AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             email: { inq: ['info@fabien.be', 'info@foo.bar'] }
-        }).should.eql('email:("info@fabien.be" OR "info@foo.bar") AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('((email:("info@fabien.be" OR "info@foo.bar") AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             email: { nin: ['info@fabien.be', 'info@foo.bar'] }
-        }).should.eql('-email:("info@fabien.be" OR "info@foo.bar") AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('((-email:("info@fabien.be" OR "info@foo.bar") AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             email: { like: 'info@*' }
-        }).should.eql('email:"info@*" AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('((email:"info@*" AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             id: 'info@fabien.be' // aliased id when it contains @ - as email
-        }).should.eql('email:"info@fabien.be" AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('((email:"info@fabien.be" AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             or: [
                 { email: 'info@fabien.be' },
                 { favoriteColor: 'red', testing: false }
             ]
-        }).should.eql('(email:"info@fabien.be" OR (user_metadata.favoriteColor:"red" AND app_metadata.testing:false)) AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('(((email:"info@fabien.be" OR (user_metadata.favoriteColor:"red" AND app_metadata.testing:false)) AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             $search: 'orange'
-        }).should.eql('orange AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('((orange AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             $exists: 'favoriteColor'
-        }).should.eql('_exists_:user_metadata.favoriteColor AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('((_exists_:user_metadata.favoriteColor AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             $missing: 'favoriteColor'
-        }).should.eql('_missing_:user_metadata.favoriteColor AND ' + baseQuery);
-        connector.buildWhere('Customer', {
+        }).should.eql('((_missing_:user_metadata.favoriteColor AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        buildWhere({
             favoriteColor: null
-        }).should.eql('(user_metadata.favoriteColor:"" OR user_metadata.favoriteColor:0 OR _missing_:user_metadata.favoriteColor) AND ' + baseQuery);
+        }).should.eql('(((user_metadata.favoriteColor:"" OR user_metadata.favoriteColor:0 OR _missing_:user_metadata.favoriteColor) AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
     });
     
     it('should serialize user data using mapping, defaults and attributes', function() {
