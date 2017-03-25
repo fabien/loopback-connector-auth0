@@ -124,6 +124,7 @@ describe('Connector', function() {
     
     it('should find a user by id', function(next) {
         Customer.findById(ids.user, function(err, user) {
+            if (err) return next(err);
             user.id.should.equal(ids.user);
             user.email.should.equal(EMAIL);
             user.emailVerified.should.be.true;
