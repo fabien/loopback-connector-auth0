@@ -27,24 +27,24 @@ describe('Connector', function() {
     it('should create a query', function() {
         var baseQuery = '(app_metadata.demoUser:true AND identities.connection:"Username-Password-Authentication")';
         connector.buildQuery('Customer').should.eql({
-            q: baseQuery, search_engine: 'v2'
+            q: baseQuery, search_engine: 'v3'
         });
         connector.buildQuery('Customer', { limit: 5, offset: 1 }).should.eql({
-            q: baseQuery, search_engine: 'v2',
+            q: baseQuery, search_engine: 'v3',
             per_page: 5
         });
         connector.buildQuery('Customer', { limit: 5, offset: 2 }).should.eql({
-            q: baseQuery, search_engine: 'v2',
+            q: baseQuery, search_engine: 'v3',
             per_page: 5,
             page: 1
         });
         connector.buildQuery('Customer', { fields: ['id', 'favoriteColor', 'demoUser'] }).should.eql({
-            q: baseQuery, search_engine: 'v2',
+            q: baseQuery, search_engine: 'v3',
             fields: 'user_id,user_metadata.favoriteColor,app_metadata.demoUser'
         });
         connector.buildQuery('Customer', { where: { email: EMAIL } }).should.eql({
             q: '((email:"info@fabien.be" AND app_metadata.demoUser:true) AND identities.connection:"Username-Password-Authentication")',
-            search_engine: 'v2'
+            search_engine: 'v3'
         });
     });
     
@@ -62,11 +62,8 @@ describe('Connector', function() {
             email: { inq: ['info@fabien.be', 'info@foo.bar'] }
         }).should.eql('((email:("info@fabien.be" OR "info@foo.bar") AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
         buildWhere({
-            email: { nin: ['info@fabien.be', 'info@foo.bar'] }
-        }).should.eql('((-email:("info@fabien.be" OR "info@foo.bar") AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
-        buildWhere({
             email: { like: 'info@*' }
-        }).should.eql('((email:"info@*" AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+        }).should.eql('((email:info@* AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
         buildWhere({
             id: 'info@fabien.be' // aliased id when it contains @ - as email
         }).should.eql('((email:"info@fabien.be" AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
@@ -77,17 +74,8 @@ describe('Connector', function() {
             ]
         }).should.eql('(((email:"info@fabien.be" OR (user_metadata.favoriteColor:"red" AND app_metadata.testing:false)) AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
         buildWhere({
-            $search: 'orange'
-        }).should.eql('((orange AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
-        buildWhere({
-            $exists: 'favoriteColor'
-        }).should.eql('((_exists_:user_metadata.favoriteColor AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
-        buildWhere({
-            $missing: 'favoriteColor'
-        }).should.eql('((_missing_:user_metadata.favoriteColor AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
-        buildWhere({
-            favoriteColor: null
-        }).should.eql('(((user_metadata.favoriteColor:"" OR user_metadata.favoriteColor:0 OR _missing_:user_metadata.favoriteColor) AND app_metadata.demoUser:true) AND ' + baseQuery + ')');
+            favoriteColor: { neq: 'orange' }
+        }).should.eql('((app_metadata.demoUser:true) AND ' + baseQuery + ')'); // NOTE neq is not supported
     });
     
     it('should serialize user data using mapping, defaults and attributes', function() {
@@ -116,7 +104,7 @@ describe('Connector', function() {
             favoriteColor: 'orange'
         }, function(err, user) {
             if (err) return next(err);
-            user.id.should.be.a.string;
+            user.id.should.be.a.String();
             ids.user = user.id;
             setTimeout(next, 1000);
         });
@@ -127,9 +115,9 @@ describe('Connector', function() {
             if (err) return next(err);
             user.id.should.equal(ids.user);
             user.email.should.equal(EMAIL);
-            user.emailVerified.should.be.true;
+            user.emailVerified.should.be.true();
             user.favoriteColor.should.equal('orange');
-            user.demoUser.should.be.true;
+            user.demoUser.should.be.true();
             next();
         });
     });
@@ -138,6 +126,7 @@ describe('Connector', function() {
         Customer.findById('info@fabien.be', function(err, user) {
             user.id.should.equal(ids.user);
             user.email.should.equal(EMAIL);
+            user.demoUser.should.be.true();
             next();
         });
     });
@@ -158,8 +147,8 @@ describe('Connector', function() {
             fields: ['id', 'email']
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
-            users.should.not.be.empty;
+            users.should.be.an.Array();
+            users.should.not.be.empty();
             users[0].should.be.instanceof(Customer);
             users[0].should.have.property('id');
             users[0].should.have.property('email');
@@ -173,13 +162,13 @@ describe('Connector', function() {
             where: { email: EMAIL }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
+            users.should.be.an.Array();
             users.should.have.length(1);
             users[0].should.be.instanceof(Customer);
             users[0].should.have.property('id');
             users[0].email.should.equal(EMAIL);
-            users[0].createdAt.should.be.a.date;
-            users[0].updatedAt.should.be.a.date;
+            users[0].createdAt.should.be.a.Date();
+            users[0].updatedAt.should.be.a.Date();
             next();
         });
     });
@@ -189,26 +178,29 @@ describe('Connector', function() {
             where: { favoriteColor: 'orange' }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
+            users.should.be.an.Array();
             users.should.have.length(1);
             users[0].should.be.instanceof(Customer);
             users[0].id.should.equal(ids.user);
             users[0].email.should.equal(EMAIL);
-            users[0].emailVerified.should.be.true;
+            users[0].emailVerified.should.be.true();
             users[0].favoriteColor.should.equal('orange');
-            _.all(users, { favoriteColor: 'orange' }).should.be.true;
+            _.all(users, { favoriteColor: 'orange' }).should.be.true();
             next();
         });
     });
     
     it('should find users - filtered (3)', function(next) {
         Customer.find({
-            where: { favoriteColor: { neq: 'orange' } }
+            where: {
+                email: { like: 'info@fabien.*' }
+            }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
-            users.should.not.be.empty;
-            _.any(users, { favoriteColor: 'orange' }).should.be.false;
+            users.should.be.an.Array();
+            users.should.have.length(1);
+            users[0].should.be.instanceof(Customer);
+            users[0].id.should.equal(ids.user);
             next();
         });
     });
@@ -218,7 +210,7 @@ describe('Connector', function() {
             where: { favoriteColor: 'red' }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
+            users.should.be.an.Array();
             users.should.have.length(0);
             next();
         });
@@ -229,8 +221,8 @@ describe('Connector', function() {
             where: { email: 'fred@flintstone.com' }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
-            users.should.be.empty;
+            users.should.be.an.Array();
+            users.should.be.empty();
             next();
         });
     });
@@ -240,7 +232,7 @@ describe('Connector', function() {
             where: { email: EMAIL, favoriteColor: 'orange' }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
+            users.should.be.an.Array();
             users.should.have.length(1);
             users[0].id.should.equal(ids.user);
             users[0].email.should.equal(EMAIL);
@@ -253,8 +245,8 @@ describe('Connector', function() {
             where: { email: EMAIL, favoriteColor: 'red' }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
-            users.should.be.empty;
+            users.should.be.an.Array();
+            users.should.be.empty();
             next();
         });
     });
@@ -264,8 +256,8 @@ describe('Connector', function() {
             where: { email: { like: 'info@*' } }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
-            users.should.not.be.empty;
+            users.should.be.an.Array();
+            users.should.not.be.empty();
             _.pluck(users, 'id').should.containEql(ids.user);
             next();
         });
@@ -276,8 +268,8 @@ describe('Connector', function() {
             where: { email: { like: 'hello@*' } }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
-            users.should.be.empty;
+            users.should.be.an.Array();
+            users.should.be.empty();
             next();
         });
     });
@@ -288,7 +280,7 @@ describe('Connector', function() {
             where: { $where: luceneQuery }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
+            users.should.be.an.Array();
             users.should.have.length(1);
             users[0].id.should.equal(ids.user);
             users[0].email.should.equal(EMAIL);
@@ -298,32 +290,6 @@ describe('Connector', function() {
     
     it('should find users - filtered (11)', function(next) {
         Customer.find({
-            where: { $search: 'orange' }
-        }, function(err, users) {
-            if (err) return next(err);
-            users.should.be.an.array;
-            users.should.have.length(1);
-            users[0].id.should.equal(ids.user);
-            users[0].email.should.equal(EMAIL);
-            next();
-        });
-    });
-    
-    it('should find users - filtered (12)', function(next) {
-        Customer.find({
-            where: { _exists_: 'favoriteColor' }
-        }, function(err, users) {
-            if (err) return next(err);
-            users.should.be.an.array;
-            users.should.have.length(1);
-            users[0].id.should.equal(ids.user);
-            users[0].email.should.equal(EMAIL);
-            next();
-        });
-    });
-    
-    it('should find users - filtered (13)', function(next) {
-        Customer.find({
             where: {
                 favoriteColor: {
                     inq: ['red', 'orange', 'yellow']
@@ -331,7 +297,7 @@ describe('Connector', function() {
             }
         }, function(err, users) {
             if (err) return next(err);
-            users.should.be.an.array;
+            users.should.be.an.Array();
             users.should.have.length(1);
             users[0].id.should.equal(ids.user);
             users[0].email.should.equal(EMAIL);
@@ -339,42 +305,16 @@ describe('Connector', function() {
         });
     });
     
-    it('should find users - filtered (14)', function(next) {
-        Customer.find({
-            where: {
-                favoriteColor: {
-                    nin: ['red', 'orange', 'yellow']
-                }
-            }
-        }, function(err, users) {
-            if (err) return next(err);
-            users.should.be.an.array;
-            _.pluck(users, 'id').should.not.containEql(ids.user);
-            next();
-        });
-    });
-    
-    it('should find users - filtered (15)', function(next) {
-        Customer.find({
-            where: { favoriteColor: null }
-        }, function(err, users) {
-            if (err) return next(err);
-            users.should.be.an.array;
-            _.pluck(users, 'id').should.not.containEql(ids.user);
-            next();
-        });
-    });
-    
     it('should check if a user exists (1)', function(next) {
         Customer.exists(ids.user, function(err, exists) {
-            exists.should.be.true;
+            exists.should.be.true();
             next();
         });
     });
     
     it('should check if a user exists (2)', function(next) {
         Customer.exists('xxx', function(err, exists) {
-            exists.should.be.false;
+            exists.should.be.false();
             next();
         });
     });
@@ -410,7 +350,6 @@ describe('Connector', function() {
             user.testing = false; // omitted
             user.save(function(err, user) {
                 user.favoriteColor.should.equal('blue');
-                user.testing.should.be.true;
                 setTimeout(next, 1000);
             });
         });
@@ -420,7 +359,7 @@ describe('Connector', function() {
         Customer.findById(ids.user, function(err, user) {
             user.id.should.equal(ids.user);
             user.favoriteColor.should.equal('blue');
-            user.testing.should.be.true;
+            user.testing.should.be.true();
             next();
         });
     });
@@ -430,7 +369,7 @@ describe('Connector', function() {
             user.updateAttributes({ email: 'test@fabien.be', country: 'BE' }, function(err, user) {
                 user.favoriteColor.should.equal('blue');
                 user.country.should.equal('BE');
-                user.testing.should.be.true;
+                user.testing.should.be.true();
                 setTimeout(next, 1000);
             });
         });
@@ -442,7 +381,7 @@ describe('Connector', function() {
             user.email.should.equal('test@fabien.be');
             user.favoriteColor.should.equal('blue');
             user.country.should.equal('BE');
-            user.testing.should.be.true;
+            user.testing.should.be.true();
             next();
         });
     });
@@ -457,9 +396,9 @@ describe('Connector', function() {
     
     it('should have updated multipe users', function(next) {
         Customer.find({ country: 'NL' }, function(err, users) {
-            users.should.be.an.array;
-            users.should.not.be.empty;
-            _.all(users, { country: 'NL' }).should.be.true;
+            users.should.be.an.Array();
+            users.should.not.be.empty();
+            _.all(users, { country: 'NL' }).should.be.true();
             _.pluck(users, 'id').should.containEql(ids.user);
             _.pluck(users, 'email').should.containEql('test@fabien.be');
             next();
@@ -476,7 +415,7 @@ describe('Connector', function() {
     
     it('should have deleted user', function(next) {
         Customer.exists(ids.user, function(err, exists) {
-            exists.should.be.false;
+            exists.should.be.false();
             next();
         });
     });

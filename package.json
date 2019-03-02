@@ -14,21 +14,21 @@
 	},
 	"main": "index.js",
 	"scripts": {
-		"test": "NODE_ENV=test mocha -s 500 -t 10000 --reporter spec test"
+		"test": "NODE_ENV=test mocha --bail -s 500 -t 10000 --reporter spec test"
 	},
 	"dependencies": {
 		"async": "^1.5.2",
-		"auth0": "^2.4.0",
-		"auth0-api-tokens": "git+ssh://git@github.com/fabien/auth0-api-tokens",
+		"auth0": "^2.14.0",
+		"auth0-api-tokens": "^1.1.2",
 		"lodash": "^3.10.1",
 		"loopback-connector": "^2.3.0",
 		"traverse": "^0.6.6"
 	},
 	"devDependencies": {
 		"independent-juggler": "git+ssh://git@github.com/fabien/independent-juggler",
-		"loopback-datasource-juggler": "^2.53.0",
-		"mocha": "^2.3.4",
-		"should": "^8.1.1"
+		"loopback-datasource-juggler": "^2.54.0",
+		"mocha": "^5.2.0",
+		"should": "^11.1.0"
 	},
 	"private": true
 }
