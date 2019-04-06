@@ -29,6 +29,5 @@
 		"loopback-datasource-juggler": "^2.54.0",
 		"mocha": "^5.2.0",
 		"should": "^11.1.0"
-	},
-	"private": true
+	}
 }
