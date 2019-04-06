@@ -1,6 +1,6 @@
 {
-	"name": "loopback-connector-auth0",
-	"version": "1.0.0",
+	"name": "@atelierfabien/loopback-connector-auth0",
+	"version": "1.0.1",
 	"description": "Loopback connector for Auth0 User Management",
 	"keywords": [
 		"loopback",
@@ -25,7 +25,7 @@
 		"traverse": "^0.6.6"
 	},
 	"devDependencies": {
-		"independent-juggler": "git+ssh://git@github.com/fabien/independent-juggler",
+		"independent-juggler": "*",
 		"loopback-datasource-juggler": "^2.54.0",
 		"mocha": "^5.2.0",
 		"should": "^11.1.0"
